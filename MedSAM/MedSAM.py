@@ -9,18 +9,18 @@ from slicer.util import VTKObservationMixin
 
 
 #
-# placePoint
+# MedSAM
 #
 
 
-class placePoint(ScriptedLoadableModule):
+class MedSAM(ScriptedLoadableModule):
     """Uses ScriptedLoadableModule base class, available at:
     https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
     """
 
     def __init__(self, parent):
         ScriptedLoadableModule.__init__(self, parent)
-        self.parent.title = "placePoint"  # TODO: make this more human readable by adding spaces
+        self.parent.title = "MedSAM"  # TODO: make this more human readable by adding spaces
         self.parent.categories = [
             "Examples"
         ]  # TODO: set categories (folders where the module shows up in the module selector)
@@ -31,7 +31,7 @@ class placePoint(ScriptedLoadableModule):
         # TODO: update with short description of the module and a link to online module documentation
         self.parent.helpText = """
 This is an example of scripted loadable module bundled in an extension.
-See more information in <a href="https://github.com/organization/projectname#placePoint">module documentation</a>.
+See more information in <a href="https://github.com/organization/projectname#MedSAM">module documentation</a>.
 """
         # TODO: replace with organization, grant and thanks
         self.parent.acknowledgementText = """
@@ -62,45 +62,45 @@ def registerSampleData():
     # To ensure that the source code repository remains small (can be downloaded and installed quickly)
     # it is recommended to store data sets that are larger than a few MB in a Github release.
 
-    # placePoint1
+    # MedSAM1
     SampleData.SampleDataLogic.registerCustomSampleDataSource(
         # Category and sample name displayed in Sample Data module
-        category="placePoint",
-        sampleName="placePoint1",
+        category="MedSAM",
+        sampleName="MedSAM1",
         # Thumbnail should have size of approximately 260x280 pixels and stored in Resources/Icons folder.
         # It can be created by Screen Capture module, "Capture all views" option enabled, "Number of images" set to "Single".
-        thumbnailFileName=os.path.join(iconsPath, "placePoint1.png"),
+        thumbnailFileName=os.path.join(iconsPath, "MedSAM1.png"),
         # Download URL and target file name
         uris="https://github.com/Slicer/SlicerTestingData/releases/download/SHA256/998cb522173839c78657f4bc0ea907cea09fd04e44601f17c82ea27927937b95",
-        fileNames="placePoint1.nrrd",
+        fileNames="MedSAM1.nrrd",
         # Checksum to ensure file integrity. Can be computed by this command:
         #  import hashlib; print(hashlib.sha256(open(filename, "rb").read()).hexdigest())
         checksums="SHA256:998cb522173839c78657f4bc0ea907cea09fd04e44601f17c82ea27927937b95",
         # This node name will be used when the data set is loaded
-        nodeNames="placePoint1",
+        nodeNames="MedSAM1",
     )
 
-    # placePoint2
+    # MedSAM2
     SampleData.SampleDataLogic.registerCustomSampleDataSource(
         # Category and sample name displayed in Sample Data module
-        category="placePoint",
-        sampleName="placePoint2",
-        thumbnailFileName=os.path.join(iconsPath, "placePoint2.png"),
+        category="MedSAM",
+        sampleName="MedSAM2",
+        thumbnailFileName=os.path.join(iconsPath, "MedSAM2.png"),
         # Download URL and target file name
         uris="https://github.com/Slicer/SlicerTestingData/releases/download/SHA256/1a64f3f422eb3d1c9b093d1a18da354b13bcf307907c66317e2463ee530b7a97",
-        fileNames="placePoint2.nrrd",
+        fileNames="MedSAM2.nrrd",
         checksums="SHA256:1a64f3f422eb3d1c9b093d1a18da354b13bcf307907c66317e2463ee530b7a97",
         # This node name will be used when the data set is loaded
-        nodeNames="placePoint2",
+        nodeNames="MedSAM2",
     )
 
 
 #
-# placePointWidget
+# MedSAMWidget
 #
 
 
-class placePointWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
+class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     """Uses ScriptedLoadableModuleWidget base class, available at:
     https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
     """
@@ -115,12 +115,6 @@ class placePointWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self._parameterNode = None
         self._updatingGUIFromParameterNode = False
 
-        self.dgPositivePointListNode = None
-        self.dgPositivePointListNodeObservers = []
-        self.dgNegativePointListNode = None
-        self.dgNegativePointListNodeObservers = []
-        self.ignorePointListNodeAddEvent = False
-
         # debug
         self.updateGUIFromParameterNode()
 
@@ -132,7 +126,7 @@ class placePointWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Load widget from .ui file (created by Qt Designer).
         # Additional widgets can be instantiated manually and added to self.layout.
-        uiWidget = slicer.util.loadUI(self.resourcePath("UI/placePoint.ui"))
+        uiWidget = slicer.util.loadUI(self.resourcePath("UI/MedSAM.ui"))
         self.layout.addWidget(uiWidget)
         self.ui = slicer.util.childWidgetVariables(uiWidget)
 
@@ -143,7 +137,7 @@ class placePointWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Create logic class. Logic implements all computations that should be possible to run
         # in batch mode, without a graphical user interface.
-        self.logic = placePointLogic()
+        self.logic = MedSAMLogic()
 
         # Connections
 
@@ -151,6 +145,9 @@ class placePointWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.addObserver(slicer.mrmlScene, slicer.mrmlScene.StartCloseEvent, self.onSceneStartClose)
         self.addObserver(slicer.mrmlScene, slicer.mrmlScene.EndCloseEvent, self.onSceneEndClose)
 
+        self.ui.embeddedSegmentEditorWidget.setSegmentationNode(segmentNode)
+        self.ui.embeddedSegmentEditorWidget.setMasterVolumeNode(self._currVolumeNode)
+        
         # These connections ensure that whenever user changes some settings on the GUI, that is saved in the MRML scene
         # (in the selected parameter node).
         # self.ui.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
@@ -163,15 +160,7 @@ class placePointWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # self.ui.applyButton.connect("clicked(bool)", self.onApplyButton)
 
         # Points
-        self.ui.dgPositiveControlPointPlacementWidget.setMRMLScene(slicer.mrmlScene)
-        self.ui.dgPositiveControlPointPlacementWidget.placeButton().toolTip = "Select +ve points"
-        self.ui.dgPositiveControlPointPlacementWidget.buttonsVisible = False
-        self.ui.dgPositiveControlPointPlacementWidget.placeButton().show()
-        self.ui.dgPositiveControlPointPlacementWidget.deleteButton().show()
-
-        self.dgPositivePointListNode = None
-        self.dgPositivePointListNodeObservers = []
-
+        
     def cleanup(self):
         """
         Called when the application closes and the module widget is destroyed.
@@ -203,25 +192,19 @@ class placePointWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # Parameter node will be reset, do not use it anymore
         self.setParameterNode(None)
 
-        self.resetPointList(
-            self.ui.dgPositiveControlPointPlacementWidget,
-            self.dgPositivePointListNode,
-            self.dgPositivePointListNodeObservers,
-        )
-        self.dgPositivePointListNode = None
 
-    def resetPointList(self, markupsPlaceWidget, pointListNode, pointListNodeObservers):
-        if markupsPlaceWidget.placeModeEnabled:
-            markupsPlaceWidget.setPlaceModeEnabled(False)
+    # def resetPointList(self, markupsPlaceWidget, pointListNode, pointListNodeObservers):
+    #     if markupsPlaceWidget.placeModeEnabled:
+    #         markupsPlaceWidget.setPlaceModeEnabled(False)
 
-        if pointListNode:
-            slicer.mrmlScene.RemoveNode(pointListNode)
-            self.removePointListNodeObservers(pointListNode, pointListNodeObservers)
+    #     if pointListNode:
+    #         slicer.mrmlScene.RemoveNode(pointListNode)
+    #         self.removePointListNodeObservers(pointListNode, pointListNodeObservers)
 
-    def removePointListNodeObservers(self, pointListNode, pointListNodeObservers):
-        if pointListNode and pointListNodeObservers:
-            for observer in pointListNodeObservers:
-                pointListNode.RemoveObserver(observer)
+    # def removePointListNodeObservers(self, pointListNode, pointListNodeObservers):
+    #     if pointListNode and pointListNodeObservers:
+    #         for observer in pointListNodeObservers:
+    #             pointListNode.RemoveObserver(observer)
 
     def onSceneEndClose(self, caller, event):
         """
@@ -577,11 +560,11 @@ class placePointWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
 #
-# placePointLogic
+# MedSAMLogic
 #
 
 
-class placePointLogic(ScriptedLoadableModuleLogic):
+class MedSAMLogic(ScriptedLoadableModuleLogic):
     """This class should implement all the actual
     computation done by your module.  The interface
     should be such that other python code can import
@@ -647,11 +630,11 @@ class placePointLogic(ScriptedLoadableModuleLogic):
 
 
 #
-# placePointTest
+# MedSAMTest
 #
 
 
-class placePointTest(ScriptedLoadableModuleTest):
+class MedSAMTest(ScriptedLoadableModuleTest):
     """
     This is the test case for your scripted module.
     Uses ScriptedLoadableModuleTest base class, available at:
@@ -665,9 +648,9 @@ class placePointTest(ScriptedLoadableModuleTest):
     def runTest(self):
         """Run as few or as many tests as needed here."""
         self.setUp()
-        self.test_placePoint1()
+        self.test_MedSAM1()
 
-    def test_placePoint1(self):
+    def test_MedSAM1(self):
         """Ideally you should have several levels of tests.  At the lowest level
         tests should exercise the functionality of the logic with different inputs
         (both valid and invalid).  At higher levels your tests should emulate the
@@ -686,7 +669,7 @@ class placePointTest(ScriptedLoadableModuleTest):
         import SampleData
 
         registerSampleData()
-        inputVolume = SampleData.downloadSample("placePoint1")
+        inputVolume = SampleData.downloadSample("MedSAM1")
         self.delayDisplay("Loaded test data set")
 
         inputScalarRange = inputVolume.GetImageData().GetScalarRange()
@@ -698,7 +681,7 @@ class placePointTest(ScriptedLoadableModuleTest):
 
         # Test the module logic
 
-        logic = placePointLogic()
+        logic = MedSAMLogic()
 
         # Test algorithm with non-inverted threshold
         logic.process(inputVolume, outputVolume, threshold, True)
