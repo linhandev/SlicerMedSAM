@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 import os
 
@@ -420,7 +421,6 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             ymax = max(points[:, 0])
             print(xmin, ymin, xmax, ymax)
             self.dgPositivePointListNode.RemoveAllControlPoints()
-
 
     def getControlPointXYZ(self, pointListNode, index):
         v = self._volumeNode
