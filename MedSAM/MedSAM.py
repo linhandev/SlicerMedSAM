@@ -3,10 +3,12 @@ import os
 
 import vtk
 
+import ctk
 import slicer
 from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
 
+import numpy as np
 
 #
 # MedSAM
@@ -20,14 +22,16 @@ class MedSAM(ScriptedLoadableModule):
 
     def __init__(self, parent):
         ScriptedLoadableModule.__init__(self, parent)
-        self.parent.title = "MedSAM"  # TODO: make this more human readable by adding spaces
+        self.parent.title = "MedSAM"
         self.parent.categories = [
             "Examples"
         ]  # TODO: set categories (folders where the module shows up in the module selector)
-        self.parent.dependencies = []  # TODO: add here list of module names that this module requires
+        self.parent.dependencies = (
+            []
+        )  # TODO: add here list of module names that this module requires
         self.parent.contributors = [
-            "John Doe (AnyWare Corp.)"
-        ]  # TODO: replace with "Firstname Lastname (Organization)"
+            "Jun Ma (UoT), Lin Han (NYU Tandon School of Engineering)"
+        ]
         # TODO: update with short description of the module and a link to online module documentation
         self.parent.helpText = """
 This is an example of scripted loadable module bundled in an extension.
@@ -40,59 +44,73 @@ and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR0132
 """
 
         # Additional initialization step after application startup is complete
-        slicer.app.connect("startupCompleted()", registerSampleData)
 
+    #     slicer.app.connect("startupCompleted()", self.initializeAfterStartup)
+
+    # def initializeAfterStartup(self):
+    #     print("initializeAfterStartup", slicer.app.commandOptions().noMainWindow)
+    #     if not slicer.app.commandOptions().noMainWindow:
+    #         print("in")
+    #         # print("here")
+    #         # self.settingsPanel = MONAILabelSettingsPanel()
+    #         # slicer.app.settingsDialog().addPanel("MONAI Label", self.settingsPanel)
+
+
+# class MONAILabelSettingsPanel(ctk.ctkSettingsPanel):
+#     def __init__(self, *args, **kwargs):
+#         ctk.ctkSettingsPanel.__init__(self, *args, **kwargs)
+#         self.ui = _ui_MONAILabelSettingsPanel(self)
 
 #
 # Register sample data sets in Sample Data module
 #
 
 
-def registerSampleData():
-    """
-    Add data sets to Sample Data module.
-    """
-    # It is always recommended to provide sample data for users to make it easy to try the module,
-    # but if no sample data is available then this method (and associated startupCompeted signal connection) can be removed.
+# def registerSampleData():
+#     """
+#     Add data sets to Sample Data module.
+#     """
+#     # It is always recommended to provide sample data for users to make it easy to try the module,
+#     # but if no sample data is available then this method (and associated startupCompeted signal connection) can be removed.
 
-    import SampleData
+#     import SampleData
 
-    iconsPath = os.path.join(os.path.dirname(__file__), "Resources/Icons")
+#     iconsPath = os.path.join(os.path.dirname(__file__), "Resources/Icons")
 
-    # To ensure that the source code repository remains small (can be downloaded and installed quickly)
-    # it is recommended to store data sets that are larger than a few MB in a Github release.
+#     # To ensure that the source code repository remains small (can be downloaded and installed quickly)
+#     # it is recommended to store data sets that are larger than a few MB in a Github release.
 
-    # MedSAM1
-    SampleData.SampleDataLogic.registerCustomSampleDataSource(
-        # Category and sample name displayed in Sample Data module
-        category="MedSAM",
-        sampleName="MedSAM1",
-        # Thumbnail should have size of approximately 260x280 pixels and stored in Resources/Icons folder.
-        # It can be created by Screen Capture module, "Capture all views" option enabled, "Number of images" set to "Single".
-        thumbnailFileName=os.path.join(iconsPath, "MedSAM1.png"),
-        # Download URL and target file name
-        uris="https://github.com/Slicer/SlicerTestingData/releases/download/SHA256/998cb522173839c78657f4bc0ea907cea09fd04e44601f17c82ea27927937b95",
-        fileNames="MedSAM1.nrrd",
-        # Checksum to ensure file integrity. Can be computed by this command:
-        #  import hashlib; print(hashlib.sha256(open(filename, "rb").read()).hexdigest())
-        checksums="SHA256:998cb522173839c78657f4bc0ea907cea09fd04e44601f17c82ea27927937b95",
-        # This node name will be used when the data set is loaded
-        nodeNames="MedSAM1",
-    )
+#     # MedSAM1
+#     SampleData.SampleDataLogic.registerCustomSampleDataSource(
+#         # Category and sample name displayed in Sample Data module
+#         category="MedSAM",
+#         sampleName="MedSAM1",
+#         # Thumbnail should have size of approximately 260x280 pixels and stored in Resources/Icons folder.
+#         # It can be created by Screen Capture module, "Capture all views" option enabled, "Number of images" set to "Single".
+#         thumbnailFileName=os.path.join(iconsPath, "MedSAM1.png"),
+#         # Download URL and target file name
+#         uris="https://github.com/Slicer/SlicerTestingData/releases/download/SHA256/998cb522173839c78657f4bc0ea907cea09fd04e44601f17c82ea27927937b95",
+#         fileNames="MedSAM1.nrrd",
+#         # Checksum to ensure file integrity. Can be computed by this command:
+#         #  import hashlib; print(hashlib.sha256(open(filename, "rb").read()).hexdigest())
+#         checksums="SHA256:998cb522173839c78657f4bc0ea907cea09fd04e44601f17c82ea27927937b95",
+#         # This node name will be used when the data set is loaded
+#         nodeNames="MedSAM1",
+#     )
 
-    # MedSAM2
-    SampleData.SampleDataLogic.registerCustomSampleDataSource(
-        # Category and sample name displayed in Sample Data module
-        category="MedSAM",
-        sampleName="MedSAM2",
-        thumbnailFileName=os.path.join(iconsPath, "MedSAM2.png"),
-        # Download URL and target file name
-        uris="https://github.com/Slicer/SlicerTestingData/releases/download/SHA256/1a64f3f422eb3d1c9b093d1a18da354b13bcf307907c66317e2463ee530b7a97",
-        fileNames="MedSAM2.nrrd",
-        checksums="SHA256:1a64f3f422eb3d1c9b093d1a18da354b13bcf307907c66317e2463ee530b7a97",
-        # This node name will be used when the data set is loaded
-        nodeNames="MedSAM2",
-    )
+#     # MedSAM2
+#     SampleData.SampleDataLogic.registerCustomSampleDataSource(
+#         # Category and sample name displayed in Sample Data module
+#         category="MedSAM",
+#         sampleName="MedSAM2",
+#         thumbnailFileName=os.path.join(iconsPath, "MedSAM2.png"),
+#         # Download URL and target file name
+#         uris="https://github.com/Slicer/SlicerTestingData/releases/download/SHA256/1a64f3f422eb3d1c9b093d1a18da354b13bcf307907c66317e2463ee530b7a97",
+#         fileNames="MedSAM2.nrrd",
+#         checksums="SHA256:1a64f3f422eb3d1c9b093d1a18da354b13bcf307907c66317e2463ee530b7a97",
+#         # This node name will be used when the data set is loaded
+#         nodeNames="MedSAM2",
+#     )
 
 
 #
@@ -111,12 +129,17 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         ScriptedLoadableModuleWidget.__init__(self, parent)
         VTKObservationMixin.__init__(self)  # needed for parameter node observation
+
         self.logic = None
         self._parameterNode = None
+        self._volumeNode = None
+        self._segmentNode = None
+
         self._updatingGUIFromParameterNode = False
 
-        # debug
-        self.updateGUIFromParameterNode()
+        self.dgPositivePointListNode = None
+        self.dgPositivePointListNodeObservers = []
+        self.ignorePointListNodeAddEvent = False
 
     def setup(self):
         """
@@ -142,12 +165,16 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # Connections
 
         # These connections ensure that we update parameter node when scene is closed
-        self.addObserver(slicer.mrmlScene, slicer.mrmlScene.StartCloseEvent, self.onSceneStartClose)
-        self.addObserver(slicer.mrmlScene, slicer.mrmlScene.EndCloseEvent, self.onSceneEndClose)
+        self.addObserver(
+            slicer.mrmlScene, slicer.mrmlScene.StartCloseEvent, self.onSceneStartClose
+        )
+        self.addObserver(
+            slicer.mrmlScene, slicer.mrmlScene.EndCloseEvent, self.onSceneEndClose
+        )
+        self.addObserver(
+            slicer.mrmlScene, slicer.mrmlScene.NodeAddedEvent, self.onSceneEndImport
+        )
 
-        self.ui.embeddedSegmentEditorWidget.setSegmentationNode(segmentNode)
-        self.ui.embeddedSegmentEditorWidget.setMasterVolumeNode(self._currVolumeNode)
-        
         # These connections ensure that whenever user changes some settings on the GUI, that is saved in the MRML scene
         # (in the selected parameter node).
         # self.ui.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
@@ -158,19 +185,41 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Buttons
         # self.ui.applyButton.connect("clicked(bool)", self.onApplyButton)
+        self.ui.calculateEmbeddingButton.connect(
+            "clicked(bool)", self.calculateEmbeddingClicked
+        )
 
         # Points
-        
+        self.ui.dgPositiveControlPointPlacementWidget.setMRMLScene(slicer.mrmlScene)
+        self.ui.dgPositiveControlPointPlacementWidget.placeButton().toolTip = (
+            "Select +ve points"
+        )
+        self.ui.dgPositiveControlPointPlacementWidget.buttonsVisible = False
+        self.ui.dgPositiveControlPointPlacementWidget.placeButton().show()
+        self.ui.dgPositiveControlPointPlacementWidget.deleteButton().show()
+
+        self.initializeParameterNode()
+
+    def calculateEmbeddingClicked(self):
+        volumeNode = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLScalarVolumeNode")
+        self.ui.dgPositiveControlPointPlacementWidget.setPlaceModeEnabled(True)
+
+    def onSceneEndImport(self, caller, event):
+        if not self._volumeNode:
+            self.updateGUIFromParameterNode()
+
     def cleanup(self):
         """
         Called when the application closes and the module widget is destroyed.
         """
+        print("cleanup")
         self.removeObservers()
 
     def enter(self):
         """
         Called each time the user opens this module.
         """
+        print("enter")
         # Make sure parameter node exists and observed
         self.initializeParameterNode()
 
@@ -189,22 +238,28 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Called just before the scene is closed.
         """
+        print("onSceneStartClose")
         # Parameter node will be reset, do not use it anymore
         self.setParameterNode(None)
+        self.resetPointList(
+            self.ui.dgPositiveControlPointPlacementWidget,
+            self.dgPositivePointListNode,
+            self.dgPositivePointListNodeObservers,
+        )
+        self.dgPositivePointListNode = None
 
+    def resetPointList(self, markupsPlaceWidget, pointListNode, pointListNodeObservers):
+        if markupsPlaceWidget.placeModeEnabled:
+            markupsPlaceWidget.setPlaceModeEnabled(False)
 
-    # def resetPointList(self, markupsPlaceWidget, pointListNode, pointListNodeObservers):
-    #     if markupsPlaceWidget.placeModeEnabled:
-    #         markupsPlaceWidget.setPlaceModeEnabled(False)
+        if pointListNode:
+            slicer.mrmlScene.RemoveNode(pointListNode)
+            self.removePointListNodeObservers(pointListNode, pointListNodeObservers)
 
-    #     if pointListNode:
-    #         slicer.mrmlScene.RemoveNode(pointListNode)
-    #         self.removePointListNodeObservers(pointListNode, pointListNodeObservers)
-
-    # def removePointListNodeObservers(self, pointListNode, pointListNodeObservers):
-    #     if pointListNode and pointListNodeObservers:
-    #         for observer in pointListNodeObservers:
-    #             pointListNode.RemoveObserver(observer)
+    def removePointListNodeObservers(self, pointListNode, pointListNodeObservers):
+        if pointListNode and pointListNodeObservers:
+            for observer in pointListNodeObservers:
+                pointListNode.RemoveObserver(observer)
 
     def onSceneEndClose(self, caller, event):
         """
@@ -220,8 +275,16 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         # Parameter node stores all user choices in parameter values, node selections, etc.
         # so that when the scene is saved and reloaded, these settings are restored.
-
+        print("initializeParameterNode")
         self.setParameterNode(self.logic.getParameterNode())
+        if not self._parameterNode.GetNodeReference("InputVolume"):
+            firstVolumeNode = slicer.mrmlScene.GetFirstNodeByClass(
+                "vtkMRMLScalarVolumeNode"
+            )
+            if firstVolumeNode:
+                self._parameterNode.SetNodeReferenceID(
+                    "InputVolume", firstVolumeNode.GetID()
+                )
 
         # Select default input nodes if nothing is selected yet to save a few clicks for the user
         # if not self._parameterNode.GetNodeReference("InputVolume"):
@@ -270,14 +333,17 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # Make sure GUI changes do not call updateParameterNodeFromGUI (it could cause infinite loop)
         self._updatingGUIFromParameterNode = True
-        print("_+_+", self.dgPositivePointListNode)
         if not self.dgPositivePointListNode:
-            self.dgPositivePointListNode, self.dgPositivePointListNodeObservers = self.createPointListNode(
+            (
+                self.dgPositivePointListNode,
+                self.dgPositivePointListNodeObservers,
+            ) = self.createPointListNode(
                 "P", self.onDeepGrowPointListNodeModified, [0.5, 1, 0.5]
             )
-            print("----", type(self.dgPositivePointListNode), self.dgPositivePointListNode)
 
-            self.ui.dgPositiveControlPointPlacementWidget.setCurrentNode(self.dgPositivePointListNode)
+            self.ui.dgPositiveControlPointPlacementWidget.setCurrentNode(
+                self.dgPositivePointListNode
+            )
             self.ui.dgPositiveControlPointPlacementWidget.setPlaceModeEnabled(False)
 
         # self.ui.dgPositiveControlPointPlacementWidget.setEnabled(self.ui.deepgrowModelSelector.currentText)
@@ -309,7 +375,9 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if pointListNode:
             eventIds = [slicer.vtkMRMLMarkupsNode.PointPositionDefinedEvent]
             for eventId in eventIds:
-                pointListNodeObservers.append(pointListNode.AddObserver(eventId, onMarkupNodeModified))
+                pointListNodeObservers.append(
+                    pointListNode.AddObserver(eventId, onMarkupNodeModified)
+                )
         return pointListNodeObservers
 
     def updateParameterNodeFromGUI(self, caller=None, event=None):
@@ -321,7 +389,9 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if self._parameterNode is None or self._updatingGUIFromParameterNode:
             return
 
-        wasModified = self._parameterNode.StartModify()  # Modify all properties in a single batch
+        wasModified = (
+            self._parameterNode.StartModify()
+        )  # Modify all properties in a single batch
 
         # self._parameterNode.SetNodeReferenceID("InputVolume", self.ui.inputSelector.currentNodeID)
         # self._parameterNode.SetNodeReferenceID("OutputVolume", self.ui.outputSelector.currentNodeID)
@@ -335,51 +405,22 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         """
         Run processing when user clicks "Apply" button.
         """
-        # with slicer.util.tryWithErrorDisplay("Failed to compute results.", waitCursor=True):
-
-        #     # Compute output
-        #     self.logic.process(
-        #         self.ui.inputSelector.currentNode(),
-        #         self.ui.outputSelector.currentNode(),
-        #         self.ui.imageThresholdSliderWidget.value,
-        #         self.ui.invertOutputCheckBox.checked,
-        #     )
-
-        #     # Compute inverted output (if needed)
-        #     if self.ui.invertedOutputSelector.currentNode():
-        #         # If additional output volume is selected then result with inverted threshold is written there
-        #         self.logic.process(
-        #             self.ui.inputSelector.currentNode(),
-        #             self.ui.invertedOutputSelector.currentNode(),
-        #             self.ui.imageThresholdSliderWidget.value,
-        #             not self.ui.invertOutputCheckBox.checked,
-        #             showResult=False,
-        #         )
         pass
 
     def onDeepGrowPointListNodeModified(self, observer, eventid):
         logging.debug("Deepgrow Point Event!!")
-        print("onDeepGrowPointListNodeModified")
-        # print(self.getControlPointsXYZ(self.dgPositivePointListNode, "foreground"))
-        # if self.ignorePointListNodeAddEvent:
-        #     return
+        points = self.getControlPointsXYZ(self.dgPositivePointListNode, "foreground")
+        print(points)
 
-        # markupsNode = observer
-        # movingMarkupIndex = markupsNode.GetDisplayNode().GetActiveControlPoint()
-        # logging.debug(f"Markup point added; point ID = {movingMarkupIndex}")
+        if len(points) == 4:
+            points = np.array(points)
+            xmin = min(points[:, 1])
+            xmax = max(points[:, 1])
+            ymin = min(points[:, 0])
+            ymax = max(points[:, 0])
+            print(xmin, ymin, xmax, ymax)
+            self.dgPositivePointListNode.RemoveAllControlPoints()
 
-        # current_point = self.getControlPointXYZ(markupsNode, movingMarkupIndex)
-
-        # if not self.ui.dgUpdateCheckBox.checked:
-        #     self.onClickDeepgrow(current_point, skip_infer=True)
-        #     return
-
-        # self.onClickDeepgrow(current_point)
-
-        # self.ignorePointListNodeAddEvent = True
-        # self.onEditControlPoints(self.dgPositivePointListNode, "MONAILabel.ForegroundPoints")
-        # self.onEditControlPoints(self.dgNegativePointListNode, "MONAILabel.BackgroundPoints")
-        # self.ignorePointListNodeAddEvent = False
 
     def getControlPointXYZ(self, pointListNode, index):
         v = self._volumeNode
@@ -517,7 +558,9 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             fPosStr = vtk.mutable("")
             segment.GetTag(tagName, fPosStr)
             pointset = str(fPosStr)
-            logging.debug(f"{segmentId} => {segment.GetName()} Control points are: {pointset}")
+            logging.debug(
+                f"{segmentId} => {segment.GetName()} Control points are: {pointset}"
+            )
 
             if fPosStr is not None and len(pointset) > 0:
                 points = json.loads(pointset)
@@ -531,12 +574,14 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.updateParameterNodeFromGUI(caller, event)
 
         self.ignorePointListNodeAddEvent = True
-        self.onEditControlPoints(self.dgPositivePointListNode, "MONAILabel.ForegroundPoints")
-        # self.onEditControlPoints(self.dgNegativePointListNode, "MONAILabel.BackgroundPoints")
+        self.onEditControlPoints(
+            self.dgPositivePointListNode, "MONAILabel.ForegroundPoints"
+        )
         self.ignorePointListNodeAddEvent = False
 
     def getControlPointsXYZ(self, pointListNode, name):
-        v = self._volumeNode
+        v = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLScalarVolumeNode")
+        # v = self._volumeNode
         RasToIjkMatrix = vtk.vtkMatrix4x4()
         v.GetRASToIJKMatrix(RasToIjkMatrix)
 
@@ -589,7 +634,9 @@ class MedSAMLogic(ScriptedLoadableModuleLogic):
         if not parameterNode.GetParameter("Invert"):
             parameterNode.SetParameter("Invert", "false")
 
-    def process(self, inputVolume, outputVolume, imageThreshold, invert=False, showResult=True):
+    def process(
+        self, inputVolume, outputVolume, imageThreshold, invert=False, showResult=True
+    ):
         """
         Run the processing algorithm.
         Can be used without GUI widget.

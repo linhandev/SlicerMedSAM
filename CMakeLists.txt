@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 3.16.3...3.19.7 FATAL_ERROR)
 
-project(EISeg)
+project(MedSAM)
 
 #-----------------------------------------------------------------------------
 # Extension meta-information
-set(EXTENSION_HOMEPAGE "https://www.slicer.org/wiki/Documentation/Nightly/Extensions/EISeg")
+set(EXTENSION_HOMEPAGE "https://www.slicer.org/wiki/Documentation/Nightly/Extensions/MedSAM")
 set(EXTENSION_CATEGORY "Segmentation")
-set(EXTENSION_CONTRIBUTORS "Shiyu Tang (Baidu Co.), Lin Han (NYU Tandon)")
-set(EXTENSION_DESCRIPTION "EISeg")
-set(EXTENSION_ICONURL "https://www.example.com/Slicer/Extensions/EISeg.png")
-set(EXTENSION_SCREENSHOTURLS "https://www.example.com/Slicer/Extensions/EISeg/Screenshots/1.png")
+set(EXTENSION_CONTRIBUTORS "Jun Ma (UoT),Lin Han (NYU Tandon)")
+set(EXTENSION_DESCRIPTION "MedSAM")
+set(EXTENSION_ICONURL "https://www.example.com/Slicer/Extensions/MedSAM.png")
+set(EXTENSION_SCREENSHOTURLS "https://www.example.com/Slicer/Extensions/MedSAM/Screenshots/1.png")
 set(EXTENSION_DEPENDS "NA") # Specified as a list or "NA" if no dependencies
 
 #-----------------------------------------------------------------------------
