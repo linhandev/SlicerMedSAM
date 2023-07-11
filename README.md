@@ -1,2 +1,2 @@
-# SlicerEISeg
-3D slicer extension for interactive medical image segmentation
+# SlicerMedSAM
+3D slicer extension for Segment Anything in Medical Imaging
