@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import os
+import requests
 
 import vtk
 
@@ -8,8 +9,15 @@ import ctk
 import slicer
 from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
-
+import SimpleITK as sitk
 import numpy as np
+
+
+try:
+    from numpysocket import NumpySocket
+except ModuleNotFoundError as e:
+    slicer.util.pip_install("numpysocket")
+    from numpysocket import NumpySocket
 
 #
 # MedSAM
@@ -56,11 +64,6 @@ and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR0132
     #         # self.settingsPanel = MONAILabelSettingsPanel()
     #         # slicer.app.settingsDialog().addPanel("MONAI Label", self.settingsPanel)
 
-
-# class MONAILabelSettingsPanel(ctk.ctkSettingsPanel):
-#     def __init__(self, *args, **kwargs):
-#         ctk.ctkSettingsPanel.__init__(self, *args, **kwargs)
-#         self.ui = _ui_MONAILabelSettingsPanel(self)
 
 #
 # Register sample data sets in Sample Data module
@@ -198,12 +201,50 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.dgPositiveControlPointPlacementWidget.buttonsVisible = False
         self.ui.dgPositiveControlPointPlacementWidget.placeButton().show()
         self.ui.dgPositiveControlPointPlacementWidget.deleteButton().show()
+        self.ui.dgPositiveControlPointPlacementWidget.setPlaceModeEnabled(False)
+        self.ui.dgPositiveControlPointPlacementWidget.setPlaceMultipleMarkups(
+            self.ui.dgPositiveControlPointPlacementWidget.ForcePlaceMultipleMarkups
+        )
+        # print(type(self.ui.dgPositiveControlPointPlacementWidget))
 
         self.initializeParameterNode()
 
     def calculateEmbeddingClicked(self):
         volumeNode = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLScalarVolumeNode")
-        self.ui.dgPositiveControlPointPlacementWidget.setPlaceModeEnabled(True)
+        scan = slicer.util.arrayFromVolume(volumeNode).astype("float32")
+        print(type(volumeNode.GetDisplayNode()))
+        requests.post("http://localhost:5555/setImage")
+        with NumpySocket() as s:
+            s.connect(("localhost", 5556))
+            s.sendall(scan)
+
+        # self.ui.dgPositiveControlPointPlacementWidget.setPlaceModeEnabled(True)
+
+    def onDeepGrowPointListNodeModified(self, observer, eventid):
+        # logging.debug("Deepgrow Point Event!!")
+        points = self.getControlPointsXYZ(self.dgPositivePointListNode, "foreground")
+        print(points)
+        if len(points) == 4:
+            for idx in range(1, 4):
+                assert (
+                    points[idx][2] == points[0][2]
+                ), "The four extreme points need to be in the same slice"
+
+            points = np.array(points)
+            xmin = min(points[:, 1])
+            xmax = max(points[:, 1])
+            ymin = min(points[:, 0])
+            ymax = max(points[:, 0])
+            print(xmin, ymin, xmax, ymax)
+            requests.post(
+                "http://localhost:5555/infer",
+                json={
+                    "slice_idx": str(points[0][2]),
+                    "bbox": list(map(str, (xmin, ymin, xmax, ymax))),
+                },
+            )
+
+            self.dgPositivePointListNode.RemoveAllControlPoints()
 
     def onSceneEndImport(self, caller, event):
         if not self._volumeNode:
@@ -355,7 +396,7 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     def createPointListNode(self, name, onMarkupNodeModified, color):
         displayNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsDisplayNode")
-        displayNode.SetTextScale(0)
+        # displayNode.SetTextScale(0)
         displayNode.SetSelectedColor(color)
 
         pointListNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode")
@@ -407,20 +448,6 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         Run processing when user clicks "Apply" button.
         """
         pass
-
-    def onDeepGrowPointListNodeModified(self, observer, eventid):
-        logging.debug("Deepgrow Point Event!!")
-        points = self.getControlPointsXYZ(self.dgPositivePointListNode, "foreground")
-        print(points)
-
-        if len(points) == 4:
-            points = np.array(points)
-            xmin = min(points[:, 1])
-            xmax = max(points[:, 1])
-            ymin = min(points[:, 0])
-            ymax = max(points[:, 0])
-            print(xmin, ymin, xmax, ymax)
-            self.dgPositivePointListNode.RemoveAllControlPoints()
 
     def getControlPointXYZ(self, pointListNode, index):
         v = self._volumeNode
