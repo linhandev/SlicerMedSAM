@@ -213,6 +213,16 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.logic.get_segment_editor_node()
         )
 
+        # fall back segmentation node
+        segmentationNode = slicer.mrmlScene.GetNodeByID("MedSAMSegmentation")
+        if segmentationNode is None:
+            self.segmentationNode = slicer.mrmlScene.AddNewNodeByClass(
+                "vtkMRMLSegmentationNode"
+            )
+        else:
+            self.segmentationNode = segmentationNode
+            self.segmentationNode.SetName("MedSAMSegmentation")
+
         self.initializeParameterNode()
 
     def calculateEmbeddingClicked(self):
@@ -220,11 +230,6 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             "vtkMRMLScalarVolumeNode"
         )
 
-        # TODO: when seg node already exists, dont create new
-        self.segmentationNode = slicer.mrmlScene.AddNewNodeByClass(
-            "vtkMRMLSegmentationNode"
-        )
-        self.segmentationNode.SetName("MedSAMSegmentation")
         self.segmentationNode.SetReferenceImageGeometryParameterFromVolumeNode(
             self.volumeNode
         )
@@ -244,6 +249,9 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 "wmax": str(dn.GetWindowLevelMax()),
             },
         )
+        # TODO: support rgb image here
+        self.H, self.W = scan.shape[1:]  # [n slice / None, H, W, C]
+
         with NumpySocket() as s:
             s.connect(("localhost", 5556))
             s.sendall(scan)
@@ -254,7 +262,7 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # TODO: prompt error when embedding calc isnt finished
         # logging.debug("Deepgrow Point Event!!")
         points = self.getControlPointsXYZ(self.dgPositivePointListNode, "foreground")
-        print(points)
+        # print(points)
         if len(points) == 4:
             for idx in range(1, 4):
                 if points[idx][2] != points[0][2]:
@@ -266,10 +274,10 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
             points = np.array(points)
             slice_idx = points[0][2]
-            xmin = min(points[:, 1])
-            xmax = max(points[:, 1])
-            ymin = min(points[:, 0])
-            ymax = max(points[:, 0])
+            xmin = max(min(points[:, 1]) - 3, 0)
+            xmax = min(max(points[:, 1]) + 3, self.W)
+            ymin = max(min(points[:, 0]) - 3, 0)
+            ymax = min(max(points[:, 0]) + 3, self.H)
             # print(xmin, ymin, xmax, ymax)
             try:
                 resp = requests.post(
