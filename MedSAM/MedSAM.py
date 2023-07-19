@@ -220,6 +220,7 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             "vtkMRMLScalarVolumeNode"
         )
 
+        # TODO: when seg node already exists, dont create new
         self.segmentationNode = slicer.mrmlScene.AddNewNodeByClass(
             "vtkMRMLSegmentationNode"
         )
@@ -250,6 +251,7 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # self.ui.dgPositiveControlPointPlacementWidget.setPlaceModeEnabled(True)
 
     def onDeepGrowPointListNodeModified(self, observer, eventid):
+        # TODO: prompt error when embedding calc isnt finished
         # logging.debug("Deepgrow Point Event!!")
         points = self.getControlPointsXYZ(self.dgPositivePointListNode, "foreground")
         print(points)
@@ -258,35 +260,44 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 assert (
                     points[idx][2] == points[0][2]
                 ), "The four extreme points need to be in the same slice"
-
             points = np.array(points)
+            slice_idx = points[0][2]
             xmin = min(points[:, 1])
             xmax = max(points[:, 1])
             ymin = min(points[:, 0])
             ymax = max(points[:, 0])
-            print(xmin, ymin, xmax, ymax)
-            resp = requests.post(
-                "http://localhost:5555/infer",
-                json={
-                    "slice_idx": str(points[0][2]),
-                    "bbox": list(map(str, (xmin, ymin, xmax, ymax))),
-                },
-            )
-            # print(resp)
+            # print(xmin, ymin, xmax, ymax)
+            try:
+                resp = requests.post(
+                    "http://localhost:5555/infer",
+                    json={
+                        "slice_idx": str(slice_idx),
+                        "bbox": list(map(str, (xmin, ymin, xmax, ymax))),
+                    },
+                )
 
-            mask = np.asarray(json.loads(resp.json()))
-            mask = np.transpose(mask, (1, 0))
-            # print(mask.shape)
-            # with NumpySocket() as s:
-            #     s.bind(("", 5557))
-            #     s.listen()
-            #     conn, addr = s.accept()
-            #     with conn:
-            #         mask = conn.recv()
-            segmentId = self.ui.embeddedSegmentEditorWidget.currentSegmentID()
-            slicer.util.updateSegmentBinaryLabelmapFromArray(
-                mask, self.segmentationNode, segmentId, self.volumeNode
-            )
+                mask = np.asarray(json.loads(resp.json()))
+                mask = np.transpose(mask, (1, 0))
+                segmentId = self.ui.embeddedSegmentEditorWidget.currentSegmentID()
+                curr_mask = slicer.util.arrayFromSegmentBinaryLabelmap(
+                    self.segmentationNode, segmentId, self.volumeNode
+                )
+                curr_mask[slice_idx] |= mask
+
+                print(type(curr_mask), curr_mask.shape)
+                # print(mask.shape)
+                # with NumpySocket() as s:
+                #     s.bind(("", 5557))
+                #     s.listen()
+                #     conn, addr = s.accept()
+                #     with conn:
+                #         mask = conn.recv()
+
+                slicer.util.updateSegmentBinaryLabelmapFromArray(
+                    mask, self.segmentationNode, segmentId, self.volumeNode
+                )
+            except Error as e:
+                print(e)
 
             self.dgPositivePointListNode.RemoveAllControlPoints()
 
