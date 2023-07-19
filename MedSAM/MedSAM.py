@@ -257,9 +257,13 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         print(points)
         if len(points) == 4:
             for idx in range(1, 4):
-                assert (
-                    points[idx][2] == points[0][2]
-                ), "The four extreme points need to be in the same slice"
+                if points[idx][2] != points[0][2]:
+                    slicer.util.errorDisplay(
+                        "The four extreme points need to be in the same slice"
+                    )
+                    self.dgPositivePointListNode.RemoveAllControlPoints()
+                    return
+
             points = np.array(points)
             slice_idx = points[0][2]
             xmin = min(points[:, 1])
@@ -284,20 +288,14 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 )
                 curr_mask[slice_idx] |= mask
 
-                print(type(curr_mask), curr_mask.shape)
-                # print(mask.shape)
-                # with NumpySocket() as s:
-                #     s.bind(("", 5557))
-                #     s.listen()
-                #     conn, addr = s.accept()
-                #     with conn:
-                #         mask = conn.recv()
+                # print(type(curr_mask), curr_mask.shape)
 
+                # TODO: leave a state here on undo stack
                 slicer.util.updateSegmentBinaryLabelmapFromArray(
-                    mask, self.segmentationNode, segmentId, self.volumeNode
+                    curr_mask, self.segmentationNode, segmentId, self.volumeNode
                 )
-            except Error as e:
-                print(e)
+            except Exception as e:
+                print(str(e))
 
             self.dgPositivePointListNode.RemoveAllControlPoints()
 

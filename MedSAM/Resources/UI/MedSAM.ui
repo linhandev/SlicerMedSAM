@@ -60,7 +60,7 @@
          </sizepolicy>
         </property>
         <property name="segmentationNodeSelectorVisible">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="sourceVolumeNodeSelectorVisible">
          <bool>false</bool>
@@ -70,6 +70,9 @@
         </property>
         <property name="switchToSegmentationsButtonVisible">
          <bool>true</bool>
+        </property>
+        <property name="maximumNumberOfUndoStates">
+         <number>10</number>
         </property>
         <property name="effectColumnCount">
          <number>3</number>
