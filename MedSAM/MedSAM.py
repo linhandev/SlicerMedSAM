@@ -2,6 +2,7 @@
 import logging
 import os
 import requests
+import json
 
 import vtk
 
@@ -207,13 +208,41 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         )
         # print(type(self.ui.dgPositiveControlPointPlacementWidget))
 
+        self.ui.embeddedSegmentEditorWidget.setMRMLScene(slicer.mrmlScene)
+        self.ui.embeddedSegmentEditorWidget.setMRMLSegmentEditorNode(
+            self.logic.get_segment_editor_node()
+        )
+
         self.initializeParameterNode()
 
     def calculateEmbeddingClicked(self):
-        volumeNode = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLScalarVolumeNode")
-        scan = slicer.util.arrayFromVolume(volumeNode).astype("float32")
-        print(type(volumeNode.GetDisplayNode()))
-        requests.post("http://localhost:5555/setImage")
+        self.volumeNode = slicer.mrmlScene.GetFirstNodeByClass(
+            "vtkMRMLScalarVolumeNode"
+        )
+
+        self.segmentationNode = slicer.mrmlScene.AddNewNodeByClass(
+            "vtkMRMLSegmentationNode"
+        )
+        self.segmentationNode.SetName("MedSAMSegmentation")
+        self.segmentationNode.SetReferenceImageGeometryParameterFromVolumeNode(
+            self.volumeNode
+        )
+        self.ui.embeddedSegmentEditorWidget.setSegmentationNode(self.segmentationNode)
+        self.ui.embeddedSegmentEditorWidget.setSourceVolumeNode(self.volumeNode)
+
+        scan = slicer.util.arrayFromVolume(self.volumeNode).astype("float32")
+        # print(type(self.volumeNode.GetDisplayNode()))
+        dn = self.volumeNode.GetDisplayNode()
+        # print(dn.GetWindow(), dn.GetWindowLevelMax(), dn.GetWindowLevelMin())
+        # print(dir(dn))
+
+        requests.post(
+            "http://localhost:5555/setImage",
+            json={
+                "wmin": str(dn.GetWindowLevelMin()),
+                "wmax": str(dn.GetWindowLevelMax()),
+            },
+        )
         with NumpySocket() as s:
             s.connect(("localhost", 5556))
             s.sendall(scan)
@@ -236,12 +265,27 @@ class MedSAMWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             ymin = min(points[:, 0])
             ymax = max(points[:, 0])
             print(xmin, ymin, xmax, ymax)
-            requests.post(
+            resp = requests.post(
                 "http://localhost:5555/infer",
                 json={
                     "slice_idx": str(points[0][2]),
                     "bbox": list(map(str, (xmin, ymin, xmax, ymax))),
                 },
+            )
+            # print(resp)
+
+            mask = np.asarray(json.loads(resp.json()))
+            mask = np.transpose(mask, (1, 0))
+            # print(mask.shape)
+            # with NumpySocket() as s:
+            #     s.bind(("", 5557))
+            #     s.listen()
+            #     conn, addr = s.accept()
+            #     with conn:
+            #         mask = conn.recv()
+            segmentId = self.ui.embeddedSegmentEditorWidget.currentSegmentID()
+            slicer.util.updateSegmentBinaryLabelmapFromArray(
+                mask, self.segmentationNode, segmentId, self.volumeNode
             )
 
             self.dgPositivePointListNode.RemoveAllControlPoints()
@@ -701,6 +745,23 @@ class MedSAMLogic(ScriptedLoadableModuleLogic):
 
         stopTime = time.time()
         logging.info(f"Processing completed in {stopTime-startTime:.2f} seconds")
+
+    def get_segment_editor_node(self):
+        # Use the Segment Editor module's parameter node for the embedded segment editor widget.
+        # This ensures that if the user switches to the Segment Editor then the selected
+        # segmentation node, volume node, etc. are the same.
+        segmentEditorSingletonTag = "SegmentEditor"
+        segmentEditorNode = slicer.mrmlScene.GetSingletonNode(
+            segmentEditorSingletonTag, "vtkMRMLSegmentEditorNode"
+        )
+        if segmentEditorNode is None:
+            segmentEditorNode = slicer.mrmlScene.CreateNodeByClass(
+                "vtkMRMLSegmentEditorNode"
+            )
+            segmentEditorNode.UnRegister(None)
+            segmentEditorNode.SetSingletonTag(segmentEditorSingletonTag)
+            segmentEditorNode = slicer.mrmlScene.AddNode(segmentEditorNode)
+        return segmentEditorNode
 
 
 #
